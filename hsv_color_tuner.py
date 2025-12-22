@@ -1,4 +1,4 @@
-# git clone 
+# git clone https://github.com/Majdawad88/hsv_color_tuner.git
 from picamera2 import Picamera2
 import cv2, time
 import numpy as np
