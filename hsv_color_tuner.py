@@ -1,0 +1,69 @@
+# git clone 
+from picamera2 import Picamera2
+import cv2, time
+import numpy as np
+
+def nothing(x): pass
+
+# --- PiCamera2 setup ---
+picam2 = Picamera2()
+picam2.preview_configuration.main.size = (1280, 720)
+picam2.preview_configuration.main.format = "RGB888"  # PiCam outputs RGB
+picam2.configure("preview")
+picam2.start()
+time.sleep(0.3)  # short warm-up
+
+# --- Trackbars window ---
+win = "Trackbars"
+cv2.namedWindow(win, cv2.WINDOW_NORMAL)
+cv2.resizeWindow(win, 900, 400)
+
+cv2.createTrackbar("Lo H", win, 0,   179, nothing)
+cv2.createTrackbar("Lo S", win, 0,   255, nothing)
+cv2.createTrackbar("Lo V", win, 0,   255, nothing)
+cv2.createTrackbar("Hi H", win, 179, 179, nothing)
+cv2.createTrackbar("Hi S", win, 255, 255, nothing)
+cv2.createTrackbar("Hi V", win, 255, 255, nothing)
+
+try:
+    while True:
+        # Grab a frame from PiCamera2 (RGB888)
+        frame_rgb = picam2.capture_array()
+
+        # Convert RGB -> HSV directly
+        hsv = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2HSV)
+
+        # Read trackbar values
+        l_h = cv2.getTrackbarPos("Lo H", win)
+        l_s = cv2.getTrackbarPos("Lo S", win)
+        l_v = cv2.getTrackbarPos("Lo V", win)
+        u_h = cv2.getTrackbarPos("Hi H", win)
+        u_s = cv2.getTrackbarPos("Hi S", win)
+        u_v = cv2.getTrackbarPos("Hi V", win)
+
+        lower = np.array([l_h, l_s, l_v], dtype=np.uint8)
+        upper = np.array([u_h, u_s, u_v], dtype=np.uint8)
+
+        # Binary mask + color result
+        mask = cv2.inRange(hsv, lower, upper)
+        
+        mask_rgb = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+        result = cv2.bitwise_and(frame_rgb, frame_rgb, mask=mask)
+
+        # Stack and shrink a bit for comfort
+        stacked = np.hstack((mask_rgb, result))
+        view = cv2.resize(stacked, None, fx=0.5, fy=0.5)
+
+        # Overlay current ranges
+        txt = f"Lo[{l_h},{l_s},{l_v}]  Hi[{u_h},{u_s},{u_v}]  (ESC to quit)"
+        cv2.rectangle(view, (10, 10), (view.shape[1]-10, 40), (0,0,0), -1)
+        cv2.putText(view, txt, (15, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
+
+        cv2.imshow(win, view)
+
+        if cv2.waitKey(1) & 0xFF == 27:  # ESC
+            print([[l_h, l_s, l_v], [u_h, u_s, u_v]])
+            break
+finally:
+    picam2.stop()
+    cv2.destroyAllWindows()
