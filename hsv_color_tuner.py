@@ -9,7 +9,7 @@ def nothing(x): pass
 # --- PiCamera2 setup ---
 picam2 = Picamera2()
 picam2.preview_configuration.main.size = (1280, 720)
-picam2.preview_configuration.main.format = "RGB888"
+picam2.preview_configuration.main.format = "RGB888" 
 picam2.configure("preview")
 picam2.start()
 time.sleep(0.3) 
@@ -51,35 +51,20 @@ try:
         mask_3ch = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
         result = cv2.bitwise_and(frame_display, frame_display, mask=mask)
 
-        # --- Flipped Mapping Color Prediction ---
-        avg_h = (l_h + u_h) / 2
-        if 85 <= avg_h < 135:
-            detected_color = "BLUE" # Matches your 95-130 success range
-        elif 0 <= avg_h < 15 or 165 <= avg_h <= 179:
-            detected_color = "CYAN/LIGHT BLUE"
-        elif 15 <= avg_h < 35:
-            detected_color = "PURPLE"
-        elif 35 <= avg_h < 85:
-            detected_color = "GREEN"
-        elif 135 <= avg_h < 165:
-            detected_color = "RED/ORANGE"
-        else:
-            detected_color = "UNKNOWN"
-
         # Stack and resize for display
         stacked = np.hstack((mask_3ch, result))
         view = cv2.resize(stacked, None, fx=0.5, fy=0.5)
         
-        # --- Green Text Overlay (Updated with Detection Label) ---
-        txt = f"Lo[{l_h},{l_s},{l_v}] Hi[{u_h},{u_s},{u_v}] | Detecting: {detected_color}"
+        # --- Green Text Overlay (Numbers Only) ---
+        txt = f"Lo[{l_h},{l_s},{l_v}] Hi[{u_h},{u_s},{u_v}] (ESC to quit)"
         cv2.rectangle(view, (10, 10), (view.shape[1]-10, 40), (0,0,0), -1)
-        cv2.putText(view, txt, (15, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2)
+        cv2.putText(view, txt, (15, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
         
         cv2.imshow(win, view)
         
-        #if cv2.waitKey(1) & 0xFF == 27:
-        #    print(f"Values: [[{l_h}, {l_s}, {l_v}], [{u_h}, {u_s}, {u_v}]] | Color: {detected_color}")
-         #   break
+        if cv2.waitKey(1) & 0xFF == 27:
+            print(f"Final HSV Values: [[{l_h}, {l_s}, {l_v}], [{u_h}, {u_s}, {u_v}]]")
+            break
 finally:
     picam2.stop()
     cv2.destroyAllWindows()
