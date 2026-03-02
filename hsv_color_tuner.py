@@ -77,9 +77,9 @@ try:
         
         cv2.imshow(win, view)
         
-        if cv2.waitKey(1) & 0xFF == 27:
-            print(f"Values: [[{l_h}, {l_s}, {l_v}], [{u_h}, {u_s}, {u_v}]] | Color: {detected_color}")
-            break
+        #if cv2.waitKey(1) & 0xFF == 27:
+        #    print(f"Values: [[{l_h}, {l_s}, {l_v}], [{u_h}, {u_s}, {u_v}]] | Color: {detected_color}")
+         #   break
 finally:
     picam2.stop()
     cv2.destroyAllWindows()
